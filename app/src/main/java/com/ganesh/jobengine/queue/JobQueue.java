@@ -2,15 +2,15 @@ package com.ganesh.jobengine.queue;
 
 import com.ganesh.jobengine.domain.Job;
 
-import java.util.PriorityQueue;
-import java.util.Queue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.PriorityBlockingQueue;
 
 public class JobQueue {
     
-    private final Queue<Job> jobs;
+    private final BlockingQueue<Job> jobs;
 
     public JobQueue(){
-        this.jobs=new PriorityQueue<>(new JobPriorityComparator());
+        this.jobs=new PriorityBlockingQueue<>(11,new JobPriorityComparator());
     }
 
     public void add(Job job){
@@ -19,6 +19,10 @@ public class JobQueue {
 
     public Job poll(){
         return jobs.poll();
+    }
+
+    public Job take() throws InterruptedException{
+        return jobs.take();
     }
 
     public int size(){
