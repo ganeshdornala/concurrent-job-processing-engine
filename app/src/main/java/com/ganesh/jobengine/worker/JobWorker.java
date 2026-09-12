@@ -26,6 +26,7 @@ public class JobWorker implements Runnable{
     public void processNextJob() throws InterruptedException{
         Job job=jobQueue.take();
         job.setStatus(JobStatus.RUNNING);
+        job.incrementExecutionCount();
         execute(job);
         job.setStatus(JobStatus.COMPLETED);
     }

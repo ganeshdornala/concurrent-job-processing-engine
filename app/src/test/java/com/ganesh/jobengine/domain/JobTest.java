@@ -63,4 +63,18 @@ class JobTest {
         );
     }
 
+    @Test 
+    void executionCountShouldStartAtZero(){
+        Job job=new Job("job-5", JobType.EMAIL, JobPriority.HIGH);
+        assertEquals(0, job.getExecutionCount());
+    }
+
+    @Test 
+    void executionCountShouldIncreaseWhenIncremented(){
+        Job job=new Job("job-6", JobType.EMAIL, JobPriority.HIGH);
+        job.incrementExecutionCount();
+        job.incrementExecutionCount();
+        assertEquals(2, job.getExecutionCount());
+    }
+
 }

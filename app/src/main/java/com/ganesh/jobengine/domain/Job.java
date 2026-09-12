@@ -6,6 +6,7 @@ public class Job {
     private final JobType type;
     private final JobPriority priority;
     private JobStatus status;
+    private int executionCount;
 
     public Job(String id, JobType type, JobPriority priority){
         if(id==null||id.isBlank()){
@@ -21,6 +22,7 @@ public class Job {
         this.type=type;
         this.priority=priority;
         this.status=JobStatus.PENDING;
+        this.executionCount=0;
     }
 
     public String getId(){
@@ -41,6 +43,14 @@ public class Job {
 
     public void setStatus(JobStatus status){
         this.status=status;
+    }
+
+    public synchronized void incrementExecutionCount(){
+        executionCount++;
+    }
+
+    public int getExecutionCount(){
+        return executionCount;
     }
 
 }
