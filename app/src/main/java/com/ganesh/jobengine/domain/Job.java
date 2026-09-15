@@ -8,6 +8,7 @@ public class Job {
     private final JobPriority priority;
     private JobStatus status;
     private int executionCount;
+    private String failureMessage;
 
     public Job(String id, JobType type, JobPriority priority){
         if(id==null||id.isBlank()){
@@ -24,6 +25,7 @@ public class Job {
         this.priority=priority;
         this.status=JobStatus.PENDING;
         this.executionCount=0;
+        this.failureMessage=null;
     }
 
     public String getId(){
@@ -52,6 +54,14 @@ public class Job {
 
     public int getExecutionCount(){
         return executionCount;
+    }
+
+    public String getFailureMessage(){
+        return failureMessage;
+    }
+
+    public void recordFailure(String failureMessage){
+        this.failureMessage=failureMessage;
     }
 
     public boolean canRetry(){

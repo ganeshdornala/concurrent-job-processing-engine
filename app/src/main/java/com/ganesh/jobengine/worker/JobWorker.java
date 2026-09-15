@@ -31,6 +31,7 @@ public class JobWorker implements Runnable{
             execute(job);
             job.setStatus(JobStatus.COMPLETED);
         }catch(RuntimeException e){
+            job.recordFailure(e.getMessage());
             job.setStatus(JobStatus.FAILED);
             if(job.canRetry()){
                 job.setStatus(JobStatus.PENDING);

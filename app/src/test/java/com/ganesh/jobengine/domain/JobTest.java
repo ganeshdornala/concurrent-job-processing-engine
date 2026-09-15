@@ -92,4 +92,17 @@ class JobTest {
         assertEquals(false, job.canRetry());
     }
 
+    @Test 
+    void newJobShouldHaveNoFailureMessage(){
+        Job job=new Job("job-failure-message", JobType.DATA_PROCESSING, JobPriority.HIGH);
+        assertEquals(null, job.getFailureMessage());
+    }
+
+    @Test 
+    void jobShouldStoreFailureMessage(){
+        Job job=new Job("job-failure-message", JobType.DATA_PROCESSING, JobPriority.HIGH);
+        job.recordFailure("Connection failed");
+        assertEquals("Connection failed", job.getFailureMessage());
+    }
+
 }

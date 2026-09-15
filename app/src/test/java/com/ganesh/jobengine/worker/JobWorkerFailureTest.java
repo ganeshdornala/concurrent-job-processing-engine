@@ -77,4 +77,19 @@ class JobWorkerFailureTest {
         assertEquals(0, queue.size());
     }
 
+    @Test 
+    void failedJobShouldStoreFailureMessage() throws InterruptedException{
+        JobQueue queue=new JobQueue();
+        Job job=new Job("job-failure-detail", JobType.DATA_PROCESSING, JobPriority.HIGH);
+        queue.add(job);
+        JobWorker worker=new JobWorker(queue){
+            @Override 
+            protected void execute(Job job){
+                throw new RuntimeException("Database connection failed");
+            }
+        };
+        worker.processNextJob();
+        assertEquals("Database connection failed", job.getFailureMessage());
+    }
+
 }
