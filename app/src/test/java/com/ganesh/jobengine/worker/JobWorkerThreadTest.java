@@ -7,7 +7,11 @@ import com.ganesh.jobengine.domain.JobType;
 import com.ganesh.jobengine.queue.JobQueue;
 import org.junit.jupiter.api.Test;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class JobWorkerThreadTest {
     
@@ -17,10 +21,18 @@ class JobWorkerThreadTest {
         Job job=new Job("job-1", JobType.EMAIL, JobPriority.HIGH);
         queue.add(job);
         JobWorker worker=new JobWorker(queue);
-        Thread workerThread=new Thread(worker);
+        CountDownLatch jobCompleted=new CountDownLatch(1);
+        Thread workerThread=new Thread(()->{
+            try{
+                worker.processNextJob();
+            }catch(InterruptedException e){
+                Thread.currentThread().interrupt();
+            }finally{
+                jobCompleted.countDown();
+            }
+        });
         workerThread.start();
-        Thread.sleep(500);
-        workerThread.interrupt();
+        assertTrue(jobCompleted.await(2,TimeUnit.SECONDS));
         workerThread.join();
         assertEquals(JobStatus.COMPLETED, job.getStatus());
     }
