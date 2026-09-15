@@ -58,4 +58,23 @@ class JobWorkerFailureTest {
         assertEquals(1, queue.size());
     }
 
+    @Test 
+    void jobShouldBeMarkedFailedAfterThreeFailedAttempts() throws InterruptedException{
+        JobQueue queue=new JobQueue();
+        Job job=new Job("job-max-attempts", JobType.DATA_PROCESSING, JobPriority.HIGH);
+        queue.add(job);
+        JobWorker worker=new JobWorker(queue){
+            @Override 
+            protected void execute(Job job){
+                throw new RuntimeException("Job execution failed");
+            }
+        };
+        worker.processNextJob();
+        worker.processNextJob();
+        worker.processNextJob();
+        assertEquals(JobStatus.FAILED, job.getStatus());
+        assertEquals(3, job.getExecutionCount());
+        assertEquals(0, queue.size());
+    }
+
 }
