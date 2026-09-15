@@ -27,11 +27,15 @@ public class JobWorker implements Runnable{
         Job job=jobQueue.take();
         job.setStatus(JobStatus.RUNNING);
         job.incrementExecutionCount();
-        execute(job);
-        job.setStatus(JobStatus.COMPLETED);
+        try{
+            execute(job);
+            job.setStatus(JobStatus.COMPLETED);
+        }catch(RuntimeException e){
+            job.setStatus(JobStatus.FAILED);
+        }
     }
 
-    private void execute(Job job) throws InterruptedException{
+    protected  void execute(Job job) throws InterruptedException{
         System.out.println("Processing job: "+job.getId());
         Thread.sleep(100);
     }
