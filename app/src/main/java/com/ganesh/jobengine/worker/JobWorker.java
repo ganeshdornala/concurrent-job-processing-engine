@@ -1,5 +1,7 @@
 package com.ganesh.jobengine.worker;
 
+import com.ganesh.jobengine.persistence.JobRepository;
+
 import com.ganesh.jobengine.domain.Job;
 import com.ganesh.jobengine.domain.JobExecution;
 import com.ganesh.jobengine.domain.JobStatus;
@@ -12,14 +14,20 @@ public class JobWorker implements Runnable{
     
     private final JobQueue jobQueue;
     private final JobExecutorRegistry executorRegistry;
+    private final JobRepository jobRepository;
 
-    public JobWorker(JobQueue jobQueue){
-        this(jobQueue,new JobExecutorRegistry());
+    public JobWorker(JobQueue jobQueue) {
+        this(jobQueue,new JobExecutorRegistry(),null);
     }
 
     public JobWorker(JobQueue jobQueue,JobExecutorRegistry executorRegistry){
+        this(jobQueue,executorRegistry,null);
+    }
+
+    public JobWorker(JobQueue jobQueue,JobExecutorRegistry executorRegistry,JobRepository jobRepository){
         this.jobQueue=jobQueue;
-        this.executorRegistry=new JobExecutorRegistry();
+        this.executorRegistry=executorRegistry;
+        this.jobRepository=jobRepository;
     }
 
     @Override 
@@ -47,6 +55,7 @@ public class JobWorker implements Runnable{
                 )
             );
             job.setStatus(JobStatus.COMPLETED);
+            saveJob(job);
         }catch(RuntimeException e){
             job.recordFailure(e.getMessage());
             job.addExecution(
@@ -61,6 +70,18 @@ public class JobWorker implements Runnable{
                 job.setStatus(JobStatus.PENDING);
                 jobQueue.add(job);
             }
+            saveJob(job);
+        }
+    }
+
+    private void saveJob(Job job){
+        if (jobRepository == null) {
+            return;
+        }
+        try {
+            jobRepository.save(job);
+        } catch (java.io.IOException e) {
+            throw new IllegalStateException("Failed to persist job: " + job.getId(),e);
         }
     }
 

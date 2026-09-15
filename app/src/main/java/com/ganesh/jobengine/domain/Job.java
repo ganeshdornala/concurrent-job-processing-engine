@@ -12,28 +12,46 @@ public class Job {
     private JobStatus status;
     private int executionCount;
     private String failureMessage;
-    private static long nextSequence=0;
+    private static long nextSequence = 0;
     private final long sequence;
     private final List<JobExecution> executionHistory;
 
-    public Job(String id, JobType type, JobPriority priority){
-        if(id==null||id.isBlank()){
+    public Job(String id, JobType type, JobPriority priority) {
+        this(id,type,priority,JobStatus.PENDING,0,null,nextSequence++);
+    }
+
+    private Job(String id,JobType type,JobPriority priority,JobStatus status,int executionCount,String failureMessage,long sequence){
+        if (id == null || id.isBlank()) {
             throw new IllegalArgumentException("Job ID cannot be null or blank");
         }
-        if(type==null){
+        if (type == null) {
             throw new IllegalArgumentException("Job type cannot be null");
         }
-        if(priority==null){
+        if (priority == null) {
             throw new IllegalArgumentException("Job priority cannot be null");
         }
-        this.id=id;
-        this.type=type;
-        this.priority=priority;
-        this.status=JobStatus.PENDING;
-        this.executionCount=0;
-        this.failureMessage=null;
+        if (status == null) {
+            throw new IllegalArgumentException("Job status cannot be null");
+        }
+        if (executionCount < 0) {
+            throw new IllegalArgumentException("Execution count cannot be negative");
+        }
+        this.id = id;
+        this.type = type;
+        this.priority = priority;
+        this.status = status;
+        this.executionCount = executionCount;
+        this.failureMessage = failureMessage;
+        this.sequence = sequence;
         this.executionHistory = new ArrayList<>();
-        this.sequence=nextSequence++;
+    }
+
+    public static Job restore(String id,JobType type,JobPriority priority,JobStatus status,int executionCount,String failureMessage,long sequence){
+        return new Job(id,type,priority,status,executionCount,failureMessage,sequence);
+    }
+
+    public void restoreExecution(JobExecution execution) {
+        executionHistory.add(execution);
     }
 
     public String getId(){
