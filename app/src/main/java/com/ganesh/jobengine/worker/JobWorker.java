@@ -1,6 +1,7 @@
 package com.ganesh.jobengine.worker;
 
 import com.ganesh.jobengine.domain.Job;
+import com.ganesh.jobengine.domain.JobExecution;
 import com.ganesh.jobengine.domain.JobStatus;
 import com.ganesh.jobengine.queue.JobQueue;
 
@@ -38,9 +39,23 @@ public class JobWorker implements Runnable{
         job.incrementExecutionCount();
         try{
             execute(job);
+            job.addExecution(
+                new JobExecution(
+                    job.getExecutionCount(),
+                    JobStatus.COMPLETED,
+                    "Job completed successfully"
+                )
+            );
             job.setStatus(JobStatus.COMPLETED);
         }catch(RuntimeException e){
             job.recordFailure(e.getMessage());
+            job.addExecution(
+                new JobExecution(
+                    job.getExecutionCount(),
+                    JobStatus.FAILED,
+                    e.getMessage()
+                )
+            );
             job.setStatus(JobStatus.FAILED);
             if(job.canRetry()){
                 job.setStatus(JobStatus.PENDING);

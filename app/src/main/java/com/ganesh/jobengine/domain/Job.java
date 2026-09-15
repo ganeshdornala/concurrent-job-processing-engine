@@ -1,5 +1,8 @@
 package com.ganesh.jobengine.domain;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Job {
     
     private static final int MAX_ATTEMPTS=3;
@@ -11,6 +14,7 @@ public class Job {
     private String failureMessage;
     private static long nextSequence=0;
     private final long sequence;
+    private final List<JobExecution> executionHistory;
 
     public Job(String id, JobType type, JobPriority priority){
         if(id==null||id.isBlank()){
@@ -28,6 +32,7 @@ public class Job {
         this.status=JobStatus.PENDING;
         this.executionCount=0;
         this.failureMessage=null;
+        this.executionHistory = new ArrayList<>();
         this.sequence=nextSequence++;
     }
 
@@ -59,6 +64,10 @@ public class Job {
         return sequence;
     }
 
+    public List<JobExecution> getExecutionHistory() {
+        return executionHistory;
+    }
+
     public void setStatus(JobStatus status){
         this.status=status;
     }
@@ -69,6 +78,10 @@ public class Job {
 
     public void recordFailure(String failureMessage){
         this.failureMessage=failureMessage;
+    }
+
+    public void addExecution(JobExecution execution) {
+        executionHistory.add(execution);    
     }
 
     public boolean canRetry(){

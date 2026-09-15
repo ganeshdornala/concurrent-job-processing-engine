@@ -105,4 +105,20 @@ class JobTest {
         assertEquals("Connection failed", job.getFailureMessage());
     }
 
+    @Test
+    void shouldRecordExecutionHistory() {
+        Job job = new Job("job-1",JobType.EMAIL,JobPriority.HIGH);
+        JobExecution execution = new JobExecution(
+            1,
+            JobStatus.FAILED,
+            "Database connection failed"
+        );
+        job.addExecution(execution);
+        assertEquals(1, job.getExecutionHistory().size());
+        assertEquals(
+            execution,
+            job.getExecutionHistory().get(0)
+        );
+    }
+
 }
