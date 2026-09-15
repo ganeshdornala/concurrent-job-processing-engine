@@ -10,6 +10,20 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class JobQueueTest {
+
+    @Test 
+    void queueShouldReturnJobsInPriorityOrder(){
+        JobQueue queue=new JobQueue();
+        Job lowPriorityJob=new Job("job-low", JobType.EMAIL, JobPriority.LOW);
+        Job highPriorityJob=new Job("job-high", JobType.REPORT, JobPriority.HIGH);
+        Job mediumPriorityJob=new Job("job-medium", JobType.DATA_PROCESSING, JobPriority.MEDIUM);
+        queue.add(lowPriorityJob);
+        queue.add(highPriorityJob);
+        queue.add(mediumPriorityJob);
+        assertEquals(highPriorityJob, queue.poll());
+        assertEquals(mediumPriorityJob, queue.poll());
+        assertEquals(lowPriorityJob, queue.poll());
+    }
     
     @Test 
     void jobsShouldBeRetrievedInPriorityOrder(){
@@ -47,6 +61,20 @@ class JobQueueTest {
         JobQueue queue = new JobQueue();
         queue.add(new Job("job-1", JobType.DATA_PROCESSING, JobPriority.HIGH));
         assertEquals(JobStatus.PENDING, queue.poll().getStatus());
+    }
+
+    @Test 
+    void queueShouldPreserveInsertionOrderForSamePriority(){
+        JobQueue queue=new JobQueue();
+        Job firstJob=new Job("job-1", JobType.EMAIL, JobPriority.HIGH);
+        Job secondJob=new Job("job-2",JobType.REPORT,JobPriority.HIGH);
+        Job thirdJob=new Job("job-3",JobType.DATA_PROCESSING,JobPriority.HIGH);
+        queue.add(firstJob);
+        queue.add(secondJob);
+        queue.add(thirdJob);
+        assertEquals(firstJob, queue.poll());
+        assertEquals(secondJob, queue.poll());
+        assertEquals(thirdJob, queue.poll());
     }
 
 }

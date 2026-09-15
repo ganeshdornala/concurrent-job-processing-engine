@@ -9,10 +9,14 @@ public class JobPriorityComparator implements Comparator<Job>{
     
     @Override 
     public int compare(Job first,Job second){
-        return Integer.compare(
+        int priorityComparison= Integer.compare(
             priorityValue(second.getPriority()),
             priorityValue(first.getPriority())
         );
+        if(priorityComparison!=0){
+            return priorityComparison;
+        }
+        return Long.compare(first.getSequence(), second.getSequence());
     }
 
     private int priorityValue(JobPriority priority){

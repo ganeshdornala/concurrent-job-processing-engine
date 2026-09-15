@@ -9,6 +9,8 @@ public class Job {
     private JobStatus status;
     private int executionCount;
     private String failureMessage;
+    private static long nextSequence=0;
+    private final long sequence;
 
     public Job(String id, JobType type, JobPriority priority){
         if(id==null||id.isBlank()){
@@ -26,6 +28,7 @@ public class Job {
         this.status=JobStatus.PENDING;
         this.executionCount=0;
         this.failureMessage=null;
+        this.sequence=nextSequence++;
     }
 
     public String getId(){
@@ -44,20 +47,24 @@ public class Job {
         return status;
     }
 
-    public void setStatus(JobStatus status){
-        this.status=status;
-    }
-
-    public synchronized void incrementExecutionCount(){
-        executionCount++;
-    }
-
     public int getExecutionCount(){
         return executionCount;
     }
 
     public String getFailureMessage(){
         return failureMessage;
+    }
+
+    public long getSequence(){
+        return sequence;
+    }
+
+    public void setStatus(JobStatus status){
+        this.status=status;
+    }
+
+    public synchronized void incrementExecutionCount(){
+        executionCount++;
     }
 
     public void recordFailure(String failureMessage){
