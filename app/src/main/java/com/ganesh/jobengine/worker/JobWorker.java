@@ -4,12 +4,21 @@ import com.ganesh.jobengine.domain.Job;
 import com.ganesh.jobengine.domain.JobStatus;
 import com.ganesh.jobengine.queue.JobQueue;
 
+import com.ganesh.jobengine.executor.JobExecutor;
+import com.ganesh.jobengine.executor.JobExecutorRegistry;
+
 public class JobWorker implements Runnable{
     
     private final JobQueue jobQueue;
+    private final JobExecutorRegistry executorRegistry;
 
     public JobWorker(JobQueue jobQueue){
+        this(jobQueue,new JobExecutorRegistry());
+    }
+
+    public JobWorker(JobQueue jobQueue,JobExecutorRegistry executorRegistry){
         this.jobQueue=jobQueue;
+        this.executorRegistry=new JobExecutorRegistry();
     }
 
     @Override 
@@ -40,9 +49,9 @@ public class JobWorker implements Runnable{
         }
     }
 
-    protected  void execute(Job job) throws InterruptedException{
-        System.out.println("Processing job: "+job.getId());
-        Thread.sleep(100);
+    protected void execute(Job job) throws InterruptedException{
+        JobExecutor executor=executorRegistry.getExecutor(job.getType());
+        executor.execute(job);
     }
 
 }
