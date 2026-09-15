@@ -77,4 +77,19 @@ class JobTest {
         assertEquals(2, job.getExecutionCount());
     }
 
+    @Test 
+    void newJobShouldBeEligibleForRetry(){
+        Job job=new Job("job-retry", JobType.DATA_PROCESSING, JobPriority.HIGH);
+        assertEquals(true, job.canRetry());
+    }
+
+    @Test 
+    void jobShouldStopBeingEligibleForRetryAfterThreeAttempts(){
+        Job job=new Job("job-retry-limit", JobType.DATA_PROCESSING, JobPriority.HIGH);
+        job.incrementExecutionCount();
+        job.incrementExecutionCount();
+        job.incrementExecutionCount();
+        assertEquals(false, job.canRetry());
+    }
+
 }

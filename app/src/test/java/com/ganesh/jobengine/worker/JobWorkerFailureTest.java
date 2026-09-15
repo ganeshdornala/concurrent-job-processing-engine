@@ -23,7 +23,7 @@ class JobWorkerFailureTest {
             }
         };
         worker.processNextJob();
-        assertEquals(JobStatus.FAILED, job.getStatus());
+        assertEquals(JobStatus.PENDING, job.getStatus());
     }
 
     @Test 
@@ -39,6 +39,23 @@ class JobWorkerFailureTest {
         };
         worker.processNextJob();
         assertEquals(1, job.getExecutionCount());
+    }
+
+    @Test 
+    void failedJobShouldBeRequeuedWhenItCanRetry() throws InterruptedException{
+        JobQueue queue=new JobQueue();
+        Job job=new Job("job-requeue", JobType.DATA_PROCESSING, JobPriority.HIGH);
+        queue.add(job);
+        JobWorker worker=new JobWorker(queue){
+            @Override 
+            protected void execute(Job job){
+                throw new RuntimeException("job execution failed");
+            }
+        };
+        worker.processNextJob();
+        assertEquals(JobStatus.PENDING, job.getStatus());
+        assertEquals(1, job.getExecutionCount());
+        assertEquals(1, queue.size());
     }
 
 }

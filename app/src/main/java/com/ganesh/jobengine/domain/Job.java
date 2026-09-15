@@ -2,6 +2,7 @@ package com.ganesh.jobengine.domain;
 
 public class Job {
     
+    private static final int MAX_ATTEMPTS=3;
     private final String id;
     private final JobType type;
     private final JobPriority priority;
@@ -51,6 +52,10 @@ public class Job {
 
     public int getExecutionCount(){
         return executionCount;
+    }
+
+    public boolean canRetry(){
+        return executionCount<MAX_ATTEMPTS;
     }
 
 }
