@@ -76,11 +76,12 @@ public class JobWorker implements Runnable{
             job.setStatus(JobStatus.FAILED);
             if(job.canRetry()){
                 job.setStatus(JobStatus.PENDING);
+                saveJob(job);
                 jobQueue.add(job);
             }else{
                 moveToDeadLetterQueue(job);
+                saveJob(job);
             }
-            saveJob(job);
         }
     }
 

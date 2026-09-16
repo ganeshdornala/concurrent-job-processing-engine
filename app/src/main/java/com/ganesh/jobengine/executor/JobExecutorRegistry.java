@@ -26,7 +26,13 @@ public class JobExecutorRegistry {
         return executor;
     }
 
-    public void register(JobType jobType, JobExecutor executor) {
+    public void register(JobType jobType, JobExecutor executor){
+        if(jobType==null){
+            throw new IllegalArgumentException("Job type cannot be null");
+        }
+        if(executor==null){
+            throw new IllegalArgumentException("Job executor cannot be null");
+        }
         executors.put(jobType, executor);
     }
 

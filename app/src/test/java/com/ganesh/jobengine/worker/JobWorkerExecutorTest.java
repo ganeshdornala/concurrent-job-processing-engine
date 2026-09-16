@@ -20,7 +20,8 @@ class JobWorkerExecutorTest {
         Job job = new Job("job-1",JobType.EMAIL,JobPriority.HIGH);
         queue.add(job);
         JobExecutorRegistry registry = new JobExecutorRegistry();
-        JobExecutor customExecutor =jobToExecute -> "Custom execution: " + jobToExecute.getId();    
+        JobExecutor customExecutor =jobToExecute ->{
+        }  ;
         registry.register(JobType.EMAIL, customExecutor);
         JobWorker worker = new JobWorker(queue, registry);
         worker.processNextJob();

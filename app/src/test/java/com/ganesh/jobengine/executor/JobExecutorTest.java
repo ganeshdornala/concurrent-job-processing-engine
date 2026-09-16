@@ -5,16 +5,16 @@ import com.ganesh.jobengine.domain.JobPriority;
 import com.ganesh.jobengine.domain.JobType;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 class JobExecutorTest {
 
     @Test 
-    void executorShouldExecuteJob(){
+    void executorShouldExecuteJob() {
         Job job=new Job("job-1", JobType.EMAIL, JobPriority.HIGH);
-        JobExecutor executor=jobToExecute->"Executed "+jobToExecute.getId();
-        String result=executor.execute(job);
-        assertEquals("Executed job-1", result);
+        JobExecutor executor=jobToExecute->{
+        };
+        assertDoesNotThrow(() -> executor.execute(job));
     }
 
 }

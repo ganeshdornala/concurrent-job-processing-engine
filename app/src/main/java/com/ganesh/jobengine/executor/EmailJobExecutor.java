@@ -5,8 +5,7 @@ import com.ganesh.jobengine.domain.Job;
 public class EmailJobExecutor implements JobExecutor{
     
     @Override
-    public String execute(Job job){
-        return "Executed email job: "+job.getId();
+    public void execute(Job job){
     } 
 
 }

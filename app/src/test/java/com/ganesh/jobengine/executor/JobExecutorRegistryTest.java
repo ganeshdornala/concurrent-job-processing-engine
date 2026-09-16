@@ -5,7 +5,7 @@ import com.ganesh.jobengine.domain.JobPriority;
 import com.ganesh.jobengine.domain.JobType;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
 class JobExecutorRegistryTest {
@@ -31,13 +31,13 @@ class JobExecutorRegistryTest {
     @Test
     void registryShouldAllowCustomExecutorRegistration() {
         JobExecutorRegistry registry = new JobExecutorRegistry();
-        JobExecutor customExecutor = job -> "Custom execution: " + job.getId();
+        JobExecutor customExecutor = job -> {
+        };
         registry.register(JobType.EMAIL, customExecutor);
         JobExecutor executor = registry.getExecutor(JobType.EMAIL);
-        assertEquals(
-            "Custom execution: job-1",
-            executor.execute(
-                new com.ganesh.jobengine.domain.Job("job-1",JobType.EMAIL,com.ganesh.jobengine.domain.JobPriority.HIGH)
+        assertDoesNotThrow(
+            () -> executor.execute(
+                new Job("job-1",JobType.EMAIL,JobPriority.HIGH)
             )
         );
     }

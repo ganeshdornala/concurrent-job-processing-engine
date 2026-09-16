@@ -15,6 +15,7 @@ import java.nio.file.Path;
 import java.util.Base64;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.List;
 
 public class FileJobRepository implements JobRepository {
 
@@ -43,9 +44,10 @@ public class FileJobRepository implements JobRepository {
         if (job.getFailureMessage() != null) {
             properties.setProperty("failureMessage",job.getFailureMessage());
         }
-        properties.setProperty("executionHistory.size",String.valueOf(job.getExecutionHistory().size()));
-        for (int i = 0; i < job.getExecutionHistory().size(); i++) {
-            JobExecution execution = job.getExecutionHistory().get(i);
+        List<JobExecution> executionHistory=job.getExecutionHistory();
+        properties.setProperty("executionHistory.size",String.valueOf(executionHistory.size()));
+        for (int i = 0; i < executionHistory.size(); i++) {
+            JobExecution execution = executionHistory.get(i);
             properties.setProperty("execution." + i + ".attempt",String.valueOf(execution.getAttempt()));
             properties.setProperty("execution." + i + ".status",execution.getStatus().name());
             if (execution.getMessage() != null) {

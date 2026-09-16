@@ -5,6 +5,6 @@ import com.ganesh.jobengine.domain.Job;
 @FunctionalInterface 
 public interface JobExecutor {
 
-    String execute(Job job);
+    void execute(Job job);
     
 }
