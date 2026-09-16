@@ -2,6 +2,7 @@ package com.ganesh.jobengine.domain;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class Job {
     
@@ -12,12 +13,12 @@ public class Job {
     private JobStatus status;
     private int executionCount;
     private String failureMessage;
-    private static long nextSequence = 0;
+    private static final AtomicLong NEXT_SEQUENCE = new AtomicLong();
     private final long sequence;
     private final List<JobExecution> executionHistory;
 
     public Job(String id, JobType type, JobPriority priority) {
-        this(id,type,priority,JobStatus.PENDING,0,null,nextSequence++);
+        this(id,type,priority,JobStatus.PENDING,0,null,NEXT_SEQUENCE.getAndIncrement());
     }
 
     private Job(String id,JobType type,JobPriority priority,JobStatus status,int executionCount,String failureMessage,long sequence){
@@ -47,7 +48,11 @@ public class Job {
     }
 
     public static Job restore(String id,JobType type,JobPriority priority,JobStatus status,int executionCount,String failureMessage,long sequence){
-        return new Job(id,type,priority,status,executionCount,failureMessage,sequence);
+        Job job = new Job(id,type,priority,status,executionCount,failureMessage,sequence);
+        if (sequence != Long.MAX_VALUE) {
+            NEXT_SEQUENCE.updateAndGet(current -> Math.max(current, sequence + 1));
+        }
+        return job;
     }
 
     public void restoreExecution(JobExecution execution) {
