@@ -2,6 +2,8 @@ package com.ganesh.jobengine.worker;
 
 import com.ganesh.jobengine.persistence.JobRepository;
 
+import com.ganesh.jobengine.deadletter.DeadLetterQueue;
+
 import com.ganesh.jobengine.domain.Job;
 import com.ganesh.jobengine.domain.JobExecution;
 import com.ganesh.jobengine.domain.JobStatus;
@@ -15,19 +17,25 @@ public class JobWorker implements Runnable{
     private final JobQueue jobQueue;
     private final JobExecutorRegistry executorRegistry;
     private final JobRepository jobRepository;
+    private final DeadLetterQueue deadLetterQueue;
 
     public JobWorker(JobQueue jobQueue) {
-        this(jobQueue,new JobExecutorRegistry(),null);
+        this(jobQueue,new JobExecutorRegistry(),null,null);
     }
 
     public JobWorker(JobQueue jobQueue,JobExecutorRegistry executorRegistry){
-        this(jobQueue,executorRegistry,null);
+        this(jobQueue,executorRegistry,null,null);
     }
 
     public JobWorker(JobQueue jobQueue,JobExecutorRegistry executorRegistry,JobRepository jobRepository){
+        this(jobQueue,executorRegistry,jobRepository,null);
+    }
+
+    public JobWorker(JobQueue jobQueue,JobExecutorRegistry executorRegistry,JobRepository jobRepository,DeadLetterQueue deadLetterQueue){
         this.jobQueue=jobQueue;
         this.executorRegistry=executorRegistry;
         this.jobRepository=jobRepository;
+        this.deadLetterQueue=deadLetterQueue;
     }
 
     @Override 
@@ -69,6 +77,8 @@ public class JobWorker implements Runnable{
             if(job.canRetry()){
                 job.setStatus(JobStatus.PENDING);
                 jobQueue.add(job);
+            }else{
+                moveToDeadLetterQueue(job);
             }
             saveJob(job);
         }
@@ -83,6 +93,13 @@ public class JobWorker implements Runnable{
         } catch (java.io.IOException e) {
             throw new IllegalStateException("Failed to persist job: " + job.getId(),e);
         }
+    }
+
+    private void moveToDeadLetterQueue(Job job){
+        if(deadLetterQueue==null){
+            return;
+        }
+        deadLetterQueue.add(job);
     }
 
     protected void execute(Job job) throws InterruptedException{
