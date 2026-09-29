@@ -14,6 +14,9 @@ public class JobQueue {
     }
 
     public void add(Job job){
+        if(job==null){
+            throw new IllegalArgumentException("Job cannot be null");
+        }
         jobs.add(job);
     }
 

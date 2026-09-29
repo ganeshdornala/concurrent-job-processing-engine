@@ -6,8 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class JobTest {
-    
-    @Test 
+
+    @Test
     void jobShouldBeCreatedWithPendingStatus(){
         Job job=new Job(
             "job-1",
@@ -20,7 +20,7 @@ class JobTest {
         assertEquals(JobStatus.PENDING, job.getStatus());
     }
 
-    @Test 
+    @Test
     void jobStatusShouldBeChangeable(){
         Job job=new Job(
             "job-2",
@@ -31,7 +31,7 @@ class JobTest {
         assertEquals(JobStatus.RUNNING, job.getStatus());
     }
 
-    @Test 
+    @Test
     void jobShouldRejectNullId(){
         assertThrows(
             IllegalArgumentException.class,
@@ -39,7 +39,7 @@ class JobTest {
         );
     }
 
-    @Test 
+    @Test
     void jobShouldRejectBlankId(){
         assertThrows(
             IllegalArgumentException.class,
@@ -47,7 +47,7 @@ class JobTest {
         );
     }
 
-    @Test 
+    @Test
     void jobShouldRejectNullType(){
         assertThrows(
             IllegalArgumentException.class,
@@ -55,7 +55,7 @@ class JobTest {
         );
     }
 
-    @Test 
+    @Test
     void jobShouldRejectNullPriority(){
         assertThrows(
             IllegalArgumentException.class,
@@ -63,13 +63,13 @@ class JobTest {
         );
     }
 
-    @Test 
+    @Test
     void executionCountShouldStartAtZero(){
         Job job=new Job("job-5", JobType.EMAIL, JobPriority.HIGH);
         assertEquals(0, job.getExecutionCount());
     }
 
-    @Test 
+    @Test
     void executionCountShouldIncreaseWhenIncremented(){
         Job job=new Job("job-6", JobType.EMAIL, JobPriority.HIGH);
         job.incrementExecutionCount();
@@ -77,13 +77,13 @@ class JobTest {
         assertEquals(2, job.getExecutionCount());
     }
 
-    @Test 
+    @Test
     void newJobShouldBeEligibleForRetry(){
         Job job=new Job("job-retry", JobType.DATA_PROCESSING, JobPriority.HIGH);
         assertEquals(true, job.canRetry());
     }
 
-    @Test 
+    @Test
     void jobShouldStopBeingEligibleForRetryAfterThreeAttempts(){
         Job job=new Job("job-retry-limit", JobType.DATA_PROCESSING, JobPriority.HIGH);
         job.incrementExecutionCount();
@@ -92,13 +92,13 @@ class JobTest {
         assertEquals(false, job.canRetry());
     }
 
-    @Test 
+    @Test
     void newJobShouldHaveNoFailureMessage(){
         Job job=new Job("job-failure-message", JobType.DATA_PROCESSING, JobPriority.HIGH);
         assertEquals(null, job.getFailureMessage());
     }
 
-    @Test 
+    @Test
     void jobShouldStoreFailureMessage(){
         Job job=new Job("job-failure-message", JobType.DATA_PROCESSING, JobPriority.HIGH);
         job.recordFailure("Connection failed");
@@ -118,6 +118,31 @@ class JobTest {
         assertEquals(
             execution,
             job.getExecutionHistory().get(0)
+        );
+    }
+
+    @Test
+    void shouldRejectNullStatus(){
+        Job job=new Job("job-1", JobType.EMAIL, JobPriority.HIGH);
+        assertThrows(
+            IllegalArgumentException.class,
+            ()->job.setStatus(null)
+        );
+    }
+
+    @Test
+    void executionHistoryShouldBeUnmodifiable(){
+        Job job=new Job("job-1", JobType.EMAIL, JobPriority.HIGH);
+        job.addExecution(
+            new JobExecution(
+                1,
+                JobStatus.COMPLETED,
+                "Job completed"
+            )
+        );
+        assertThrows(
+            UnsupportedOperationException.class,
+            ()->job.getExecutionHistory().clear()
         );
     }
 

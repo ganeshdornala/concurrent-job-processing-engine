@@ -8,10 +8,11 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class JobQueueTest {
 
-    @Test 
+    @Test
     void queueShouldReturnJobsInPriorityOrder(){
         JobQueue queue=new JobQueue();
         Job lowPriorityJob=new Job("job-low", JobType.EMAIL, JobPriority.LOW);
@@ -24,8 +25,8 @@ class JobQueueTest {
         assertEquals(mediumPriorityJob, queue.poll());
         assertEquals(lowPriorityJob, queue.poll());
     }
-    
-    @Test 
+
+    @Test
     void jobsShouldBeRetrievedInPriorityOrder(){
         JobQueue queue=new JobQueue();
         Job low=new Job("job-low", JobType.EMAIL, JobPriority.LOW);
@@ -63,7 +64,7 @@ class JobQueueTest {
         assertEquals(JobStatus.PENDING, queue.poll().getStatus());
     }
 
-    @Test 
+    @Test
     void queueShouldPreserveInsertionOrderForSamePriority(){
         JobQueue queue=new JobQueue();
         Job firstJob=new Job("job-1", JobType.EMAIL, JobPriority.HIGH);
@@ -75,6 +76,15 @@ class JobQueueTest {
         assertEquals(firstJob, queue.poll());
         assertEquals(secondJob, queue.poll());
         assertEquals(thirdJob, queue.poll());
+    }
+
+    @Test
+    void shouldRejectNullJob(){
+        JobQueue queue=new JobQueue();
+        assertThrows(
+            IllegalArgumentException.class,
+            ()->queue.add(null)
+        );
     }
 
 }

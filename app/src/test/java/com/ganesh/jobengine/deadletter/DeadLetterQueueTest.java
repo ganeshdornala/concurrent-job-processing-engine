@@ -7,10 +7,11 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class DeadLetterQueueTest {
-    
-    @Test 
+
+    @Test
     void shouldAddAndPollJob(){
         DeadLetterQueue deadLetterQueue=new DeadLetterQueue();
         Job job=new Job("job-1", JobType.EMAIL, JobPriority.HIGH);
@@ -21,7 +22,7 @@ class DeadLetterQueueTest {
         assertTrue(deadLetterQueue.isEmpty());
     }
 
-    @Test 
+    @Test
     void shouldReturnJobsInInsertionOrder(){
         DeadLetterQueue deadLetterQueue=new DeadLetterQueue();
         Job firstJob=new Job("job-1", JobType.EMAIL, JobPriority.HIGH);
@@ -32,12 +33,21 @@ class DeadLetterQueueTest {
         assertEquals(secondJob, deadLetterQueue.poll());
     }
 
-    @Test 
+    @Test
     void shouldReturnEmptyWhenQueueHasNoJobs(){
         DeadLetterQueue deadLetterQueue=new DeadLetterQueue();
         assertTrue(deadLetterQueue.isEmpty());
         assertEquals(0, deadLetterQueue.size());
         assertEquals(null, deadLetterQueue.poll());
+    }
+
+    @Test
+    void shouldRejectNullJob(){
+        DeadLetterQueue queue=new DeadLetterQueue();
+        assertThrows(
+            IllegalArgumentException.class,
+            ()->queue.add(null)
+        );
     }
 
 }

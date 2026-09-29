@@ -88,10 +88,13 @@ public class Job {
     }
 
     public List<JobExecution> getExecutionHistory() {
-        return executionHistory;
+        return List.copyOf(executionHistory);
     }
 
     public void setStatus(JobStatus status){
+        if(status==null){
+            throw new IllegalArgumentException("Job status cannot be null");
+        }
         this.status=status;
     }
 
