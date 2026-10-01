@@ -1,5 +1,7 @@
 package com.ganesh.jobengine.worker;
 
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -91,6 +93,32 @@ class JobWorkerPoolTest {
         shutdownThread.join(2000);
         assertFalse(interrupted.get());
         assertEquals(JobStatus.COMPLETED, job.getStatus());
+    }
+
+    @Test 
+    void workerPoolShouldProcessJobsByPriority() throws InterruptedException{
+        JobQueue queue=new JobQueue();
+        Job low=new Job("low", JobType.EMAIL, JobPriority.LOW);
+        Job high=new Job("high", JobType.EMAIL, JobPriority.HIGH);
+        Job medium=new Job("medium", JobType.EMAIL, JobPriority.MEDIUM);
+        queue.add(low);
+        queue.add(high);
+        queue.add(medium);
+        List<String> executionOrder=new CopyOnWriteArrayList<>();
+        CountDownLatch completed=new CountDownLatch(3);
+        JobExecutorRegistry registry=new JobExecutorRegistry();
+        registry.register(JobType.EMAIL, job->{
+            executionOrder.add(job.getId());
+            completed.countDown();
+        });
+        JobWorkerPool pool=new JobWorkerPool(1,null,null,registry);
+        pool.start(queue);
+        assertTrue(completed.await(2,TimeUnit.SECONDS));
+        pool.shutdown();
+        assertEquals(
+            List.of("high","medium","low"),
+            executionOrder
+        );
     }
     
 }
