@@ -10,6 +10,7 @@ import com.ganesh.jobengine.executor.JobExecutorRegistry;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.Semaphore;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,25 +23,26 @@ public class JobWorkerPool {
     private final DeadLetterQueue deadLetterQueue;
     private final JobExecutorRegistry executorRegistry;
     private final List<JobWorker> workers;
+    private final Semaphore resourceLimit;
 
     public JobWorkerPool(int workerCount) {
         this(
-            workerCount,
-            null,
-            null,
-            new JobExecutorRegistry()
-        );
+                workerCount,
+                null,
+                null,
+                new JobExecutorRegistry(),
+                workerCount);
     }
 
     public JobWorkerPool(
             int workerCount,
             JobRepository jobRepository) {
         this(
-            workerCount,
-            jobRepository,
-            null,
-            new JobExecutorRegistry()
-        );
+                workerCount,
+                jobRepository,
+                null,
+                new JobExecutorRegistry(),
+                workerCount);
     }
 
     public JobWorkerPool(
@@ -48,11 +50,11 @@ public class JobWorkerPool {
             JobRepository jobRepository,
             DeadLetterQueue deadLetterQueue) {
         this(
-            workerCount,
-            jobRepository,
-            deadLetterQueue,
-            new JobExecutorRegistry()
-        );
+                workerCount,
+                jobRepository,
+                deadLetterQueue,
+                new JobExecutorRegistry(),
+                workerCount);
     }
 
     public JobWorkerPool(
@@ -60,13 +62,31 @@ public class JobWorkerPool {
             JobRepository jobRepository,
             DeadLetterQueue deadLetterQueue,
             JobExecutorRegistry executorRegistry) {
+        this(
+                workerCount,
+                jobRepository,
+                deadLetterQueue,
+                executorRegistry,
+                workerCount);
+    }
+
+    public JobWorkerPool(
+            int workerCount,
+            JobRepository jobRepository,
+            DeadLetterQueue deadLetterQueue,
+            JobExecutorRegistry executorRegistry,
+            int resourceLimit) {
         if (workerCount <= 0) {
             throw new IllegalArgumentException(
-                "Worker count must be greater than zero");
+                    "Worker count must be greater than zero");
+        }
+        if (resourceLimit <= 0) {
+            throw new IllegalArgumentException(
+                    "Resource limit must be greater than zero");
         }
         if (executorRegistry == null) {
             throw new IllegalArgumentException(
-                "Executor registry cannot be null");
+                    "Executor registry cannot be null");
         }
 
         this.workerCount = workerCount;
@@ -75,32 +95,33 @@ public class JobWorkerPool {
         this.executorRegistry = executorRegistry;
 
         this.executorService = Executors.newFixedThreadPool(workerCount);
-        this.workers=new ArrayList<>();
+        this.workers = new ArrayList<>();
+        this.resourceLimit = new Semaphore(resourceLimit);
     }
 
     public void start(JobQueue jobQueue) {
         for (int i = 0; i < workerCount; i++) {
-            JobWorker worker=new JobWorker(
-                jobQueue,
-                executorRegistry,
-                jobRepository,
-                deadLetterQueue
-            );
+            JobWorker worker = new JobWorker(
+                    jobQueue,
+                    executorRegistry,
+                    jobRepository,
+                    deadLetterQueue,
+                    resourceLimit);
             workers.add(worker);
             executorService.submit(worker);
         }
     }
 
     public void shutdown() throws InterruptedException {
-        for(JobWorker worker:workers){
+        for (JobWorker worker : workers) {
             worker.stop();
         }
         executorService.shutdown();
         if (!executorService.awaitTermination(5, TimeUnit.SECONDS)) {
             executorService.shutdownNow();
-            if(!executorService.awaitTermination(5,TimeUnit.SECONDS)){
+            if (!executorService.awaitTermination(5, TimeUnit.SECONDS)) {
                 throw new IllegalStateException(
-                    "Worker pool did not terminate within the timeout");
+                        "Worker pool did not terminate within the timeout");
             }
         }
     }

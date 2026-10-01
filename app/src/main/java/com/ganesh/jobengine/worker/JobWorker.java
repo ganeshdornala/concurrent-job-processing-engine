@@ -12,6 +12,8 @@ import com.ganesh.jobengine.queue.JobQueue;
 import com.ganesh.jobengine.executor.JobExecutor;
 import com.ganesh.jobengine.executor.JobExecutorRegistry;
 
+import java.util.concurrent.Semaphore;
+
 public class JobWorker implements Runnable{
     
     private final JobQueue jobQueue;
@@ -19,24 +21,26 @@ public class JobWorker implements Runnable{
     private final JobRepository jobRepository;
     private final DeadLetterQueue deadLetterQueue;
     private volatile boolean running=true;
+    private final Semaphore resourceLimit;
 
     public JobWorker(JobQueue jobQueue) {
-        this(jobQueue,new JobExecutorRegistry(),null,null);
+        this(jobQueue,new JobExecutorRegistry(),null,null,new Semaphore(1));
     }
 
     public JobWorker(JobQueue jobQueue,JobExecutorRegistry executorRegistry){
-        this(jobQueue,executorRegistry,null,null);
+        this(jobQueue,executorRegistry,null,null,new Semaphore(1));
     }
 
     public JobWorker(JobQueue jobQueue,JobExecutorRegistry executorRegistry,JobRepository jobRepository){
-        this(jobQueue,executorRegistry,jobRepository,null);
+        this(jobQueue,executorRegistry,jobRepository,null,new Semaphore(1));
     }
 
-    public JobWorker(JobQueue jobQueue,JobExecutorRegistry executorRegistry,JobRepository jobRepository,DeadLetterQueue deadLetterQueue){
+    public JobWorker(JobQueue jobQueue,JobExecutorRegistry executorRegistry,JobRepository jobRepository,DeadLetterQueue deadLetterQueue,Semaphore resourceLimit){
         this.jobQueue=jobQueue;
         this.executorRegistry=executorRegistry;
         this.jobRepository=jobRepository;
         this.deadLetterQueue=deadLetterQueue;
+        this.resourceLimit=resourceLimit;
     }
 
     @Override 
@@ -45,7 +49,13 @@ public class JobWorker implements Runnable{
             try{
                 Job job=jobQueue.poll(100,java.util.concurrent.TimeUnit.MILLISECONDS);
                 if(job!=null){
-                    processJob(job);
+                    resourceLimit.acquire();
+                    try{
+                        processJob(job);
+                    }finally{
+                        resourceLimit.release();
+                    }
+                    
                 }
             }catch(InterruptedException e){
                 Thread.currentThread().interrupt();

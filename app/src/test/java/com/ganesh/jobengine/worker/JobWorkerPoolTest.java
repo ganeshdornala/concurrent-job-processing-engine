@@ -5,6 +5,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.ganesh.jobengine.executor.JobExecutor;
 import com.ganesh.jobengine.executor.JobExecutorRegistry;
@@ -119,6 +120,41 @@ class JobWorkerPoolTest {
             List.of("high","medium","low"),
             executionOrder
         );
+    }
+
+    @Test
+    void workerPoolShouldRespectConcurrencyLimit() throws InterruptedException{
+        JobQueue queue=new JobQueue();
+        for(int i=1;i<=4;i++){
+            queue.add(new Job(
+                "job-"+i,
+                JobType.EMAIL,
+                JobPriority.MEDIUM
+            ));
+        }
+        AtomicInteger runningJobs=new AtomicInteger();
+        AtomicInteger maxRunningJobs=new AtomicInteger();
+        CountDownLatch firstTwoStarted=new CountDownLatch(2);
+        CountDownLatch finish=new CountDownLatch(1);
+        JobExecutorRegistry registry=new JobExecutorRegistry();
+        registry.register(JobType.EMAIL,job->{
+            int current=runningJobs.incrementAndGet();
+            maxRunningJobs.updateAndGet(max->Math.max(max,current));
+            firstTwoStarted.countDown();
+            try{
+                finish.await();
+            }catch(InterruptedException e){
+                Thread.currentThread().interrupt();
+            }finally{
+                runningJobs.decrementAndGet();
+            }
+        });
+        JobWorkerPool pool=new JobWorkerPool(4, null, null, registry,2);
+        pool.start(queue);
+        assertTrue(firstTwoStarted.await(2,TimeUnit.SECONDS));
+        assertEquals(2, maxRunningJobs.get());
+        finish.countDown();
+        pool.shutdown();
     }
     
 }

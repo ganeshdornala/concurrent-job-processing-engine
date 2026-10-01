@@ -14,6 +14,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.util.concurrent.Semaphore;
+
 import javax.management.RuntimeErrorException;
 
 class JobWorkerDeadLetterTest {
@@ -24,7 +26,7 @@ class JobWorkerDeadLetterTest {
         DeadLetterQueue deadLetterQueue=new DeadLetterQueue();
         Job job=new Job("job-1", JobType.EMAIL, JobPriority.HIGH);
         jobQueue.add(job);
-        JobWorker worker=new JobWorker(jobQueue,new JobExecutorRegistry(),null,deadLetterQueue){
+        JobWorker worker=new JobWorker(jobQueue,new JobExecutorRegistry(),null,deadLetterQueue,new Semaphore(1)){
             @Override 
             protected void execute(Job job) throws InterruptedException{
                 throw new RuntimeException("Email service unavailable");
