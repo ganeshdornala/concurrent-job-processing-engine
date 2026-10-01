@@ -4,6 +4,7 @@ import com.ganesh.jobengine.domain.Job;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.PriorityBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 public class JobQueue {
     
@@ -26,6 +27,10 @@ public class JobQueue {
 
     public Job take() throws InterruptedException{
         return jobs.take();
+    }
+
+    public Job poll(long timeout, TimeUnit unit) throws InterruptedException{
+        return jobs.poll(timeout, unit);
     }
 
     public int size(){

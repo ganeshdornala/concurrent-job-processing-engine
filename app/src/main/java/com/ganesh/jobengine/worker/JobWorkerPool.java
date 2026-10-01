@@ -11,6 +11,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class JobWorkerPool {
 
     private final ExecutorService executorService;
@@ -18,6 +21,7 @@ public class JobWorkerPool {
     private final JobRepository jobRepository;
     private final DeadLetterQueue deadLetterQueue;
     private final JobExecutorRegistry executorRegistry;
+    private final List<JobWorker> workers;
 
     public JobWorkerPool(int workerCount) {
         this(
@@ -71,23 +75,33 @@ public class JobWorkerPool {
         this.executorRegistry = executorRegistry;
 
         this.executorService = Executors.newFixedThreadPool(workerCount);
+        this.workers=new ArrayList<>();
     }
 
     public void start(JobQueue jobQueue) {
         for (int i = 0; i < workerCount; i++) {
-            executorService.submit(new JobWorker(
-                    jobQueue,
-                    executorRegistry,
-                    jobRepository,
-                    deadLetterQueue));
+            JobWorker worker=new JobWorker(
+                jobQueue,
+                executorRegistry,
+                jobRepository,
+                deadLetterQueue
+            );
+            workers.add(worker);
+            executorService.submit(worker);
         }
     }
 
     public void shutdown() throws InterruptedException {
-        executorService.shutdownNow();
+        for(JobWorker worker:workers){
+            worker.stop();
+        }
+        executorService.shutdown();
         if (!executorService.awaitTermination(5, TimeUnit.SECONDS)) {
-            throw new IllegalStateException(
+            executorService.shutdownNow();
+            if(!executorService.awaitTermination(5,TimeUnit.SECONDS)){
+                throw new IllegalStateException(
                     "Worker pool did not terminate within the timeout");
+            }
         }
     }
 

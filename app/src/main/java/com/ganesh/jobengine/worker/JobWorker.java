@@ -18,6 +18,7 @@ public class JobWorker implements Runnable{
     private final JobExecutorRegistry executorRegistry;
     private final JobRepository jobRepository;
     private final DeadLetterQueue deadLetterQueue;
+    private volatile boolean running=true;
 
     public JobWorker(JobQueue jobQueue) {
         this(jobQueue,new JobExecutorRegistry(),null,null);
@@ -40,17 +41,28 @@ public class JobWorker implements Runnable{
 
     @Override 
     public void run(){
-        while(!Thread.currentThread().isInterrupted()){
+        while(running&&!Thread.currentThread().isInterrupted()){
             try{
-                processNextJob();
+                Job job=jobQueue.poll(100,java.util.concurrent.TimeUnit.MILLISECONDS);
+                if(job!=null){
+                    processJob(job);
+                }
             }catch(InterruptedException e){
                 Thread.currentThread().interrupt();
             }
         }
     }
 
+    public void stop(){
+        running=false;
+    }
+
     public void processNextJob() throws InterruptedException{
         Job job=jobQueue.take();
+        processJob(job);
+    }
+
+    private void processJob(Job job) throws InterruptedException{
         job.setStatus(JobStatus.RUNNING);
         job.incrementExecutionCount();
         try{
